@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 
 def run_api_test():
-    BASE_URL = "https://operations-api.access-ci.org/wh2/state/v1/status/id/router_news.py:Warehouse_Operations_News:Infrastructure%20News/?format=json"
+    BASE_URL = "URL WITH OUTPUT AS JSON HERE"
 
     response = requests.get(BASE_URL)
     print(f"Status Code: {response.status_code}")
