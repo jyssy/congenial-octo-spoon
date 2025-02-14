@@ -22,3 +22,13 @@ define command{
         command_name    CiDeR_using_router_resource_api
         command_line    /etc/nagios-plugins/config/CiDeR_using_router_resource_api.py
         }
+
+document the python venv in the README somewhere:
+/usr/local/nagios/venv
+source /usr/local/nagios/venv/bin/activate
+
+python -m pip install --upgrade pip
+pip install requests --require-hashes
+
+-rwxr-xr-x 1 root   root    956 Feb 14 20:30 CiDeR_using_router_resource_api.py
+drwxr-xr-x 5 nagios nagios 4096 Feb 14 19:52 venv
