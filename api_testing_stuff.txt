@@ -1,0 +1,14 @@
+/etc/nagios-plugins/config/CiDeR_using_router_resource_api.py
+
+define service {
+    use                     generic-service
+    host_name               your_host_name
+    service_description     API Status Check
+    check_command           check_api_status
+    check_interval          60    ; Check every hour (60 minutes)
+    retry_interval          5     ; Retry every 5 minutes if there's a problem
+    notification_interval   1440  ; Notify once per day (1440 minutes = 24 hours)
+    notification_period     24x7
+    notification_options    w,u,c,r   ; Notify on warning, unknown, critical, and recovery
+    max_check_attempts      3     ; Try 3 times before declaring a hard state
+}
