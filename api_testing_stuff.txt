@@ -12,3 +12,13 @@ define service {
     notification_options    w,u,c,r   ; Notify on warning, unknown, critical, and recovery
     max_check_attempts      3     ; Try 3 times before declaring a hard state
 }
+# template for the others
+
+label in /services: service_description: CiDeR using router api check
+
+chack_command name from /etc/nagios-plugins/config: CiDeR_using_router_resource_api
+
+define command{
+        command_name    CiDeR_using_router_resource_api
+        command_line    /etc/nagios-plugins/config/CiDeR_using_router_resource_api.py
+        }
