@@ -36,6 +36,8 @@ GLUE2_Exe_Software_using_router_resource_api.py
 :qInfrastructure_News_using_router_news_api.py
 = Infrastructure_News_using_router_news_api
 
+related files: test1.py; test2.py
+
 document the python venv in the README somewhere:
 /usr/local/nagios/venv
 source /usr/local/nagios/venv/bin/activate
