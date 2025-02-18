@@ -1,4 +1,5 @@
-/etc/nagios-plugins/config/CiDeR_using_router_resource_api.py
+/usr/local/nagios/CiDeR_using_router_resource_api.py
+0755
 
 define service {
     use                     generic-service
@@ -18,10 +19,22 @@ label in /services: service_description: CiDeR using router api check
 
 chack_command name from /etc/nagios-plugins/config: CiDeR_using_router_resource_api
 
+d# CiDeR_using_router_resource_api
 define command{
-        command_name    CiDeR_using_router_resource_api
-        command_line    /etc/nagios-plugins/config/CiDeR_using_router_resource_api.py
-        }
+	command_name	CiDeR_using_router_resource_api
+	command_line	/usr/local/nagios/venv/bin/python3 /usr/local/nagios/CiDeR_using_router_resource_api.py
+	}
+
+CiDeR_using_router_resource_api.py
+= CiDeR_using_router_resource_api
+CI_Description_using_router_cider_api.py
+=  CI_Description_using_router_cider_api
+FOS_using_router_accessdb-fos_api.py
+= FOS_using_router_accessdb-fos_api
+GLUE2_Exe_Software_using_router_resource_api.py
+= GLUE2_Exe_Software_using_router_resource_api
+:qInfrastructure_News_using_router_news_api.py
+= Infrastructure_News_using_router_news_api
 
 document the python venv in the README somewhere:
 /usr/local/nagios/venv
