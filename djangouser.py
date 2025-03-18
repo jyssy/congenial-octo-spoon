@@ -9,7 +9,7 @@ except Exception as e:
     sys.exit(3)
 
 # The base URL for the API
-base_url = "https://a3mdev.xsede.org/xdcdb-api-test/userinfo/v2/people/search"
+base_url = " URL HERE "
 
 # Query string
 search_name = input("Enter the name for which you want to query: ")
