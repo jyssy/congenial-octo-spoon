@@ -138,7 +138,7 @@ for base_name, base_url in base_urls.items():
             svc_file.write(SERVICE_TEMPLATE.format(
                 base_name=base_name,
                 endpoint_name=endpoint_name,
-                hostname=hostname  # Use the mapped hostname here
+                hostname=hostname
             ))
         service_count += 1
 
