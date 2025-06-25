@@ -60,33 +60,50 @@ COMMAND_TEMPLATE = """
 # Ops_API_{base_name}_{endpoint_name}_Check
 define command{{
         command_name    Ops_API_{base_name}_{endpoint_name}_Check
-        command_line    /usr/local/nagios/venv/bin/python3 /usr/local/nagios/Ops_API_{base_name}_{endpoint_name}_Check.py
+        command_line    /usr/local/nagios/venv/bin/python3 /usr/local/nagios/ops_apis/Ops_API_{base_name}_{endpoint_name}_Check.py
         }}
 
 """
 
-# Template for service definition
-SERVICE_TEMPLATE = """
+# Template for service definition for prod
+SERVICE_TEMPLATE_WITH_NOTIFICATIONS = """
 
 define service{{
         use                             Critical-Service
         host_name                       {hostname}
         service_description             Ops_API_{base_name}_{endpoint_name}_Check
         check_command                   Ops_API_{base_name}_{endpoint_name}_Check
-        check_interval                  60
-        retry_interval                  5
+        check_interval                  720
         max_check_attempts              3
+        retry_interval                  5
         notification_interval           1440
         notification_period             24x7
         notification_options            w,u,c
+        servicegroups                   operations_apis
         contacts                        navarro, blau
 #        notifications_enabled           0
 }}
 
 """
 
+# Template for service definition for beta
+SERVICE_TEMPLATE_WITHOUT_NOTIFICATIONS = """
+
+define service{{
+        use                             Critical-Service
+        host_name                       {hostname}
+        service_description             Ops_API_{base_name}_{endpoint_name}_Check
+        check_command                   Ops_API_{base_name}_{endpoint_name}_Check
+        check_interval                  720
+        max_check_attempts              3
+        retry_interval                  5
+        servicegroups                   operations_apis
+}}
+
+"""
+
 # Create output directory
-os.makedirs("nagios_checks", exist_ok=True)
+os.makedirs("ops_apis", exist_ok=True)
 
 # Initialize Nagios config files
 with open("ops_api_command_defs.cfg", "w") as cmd_file:
@@ -118,7 +135,7 @@ for base_name, base_url in base_urls.items():
         )
 
         # Create the script file
-        filename = f"nagios_checks/{check_name}.py"
+        filename = f"ops_apis/{check_name}.py"
         with open(filename, "w") as f:
             f.write(script_content)
 
@@ -133,15 +150,24 @@ for base_name, base_url in base_urls.items():
             ))
         command_count += 1
 
-        # 3. Append service definition
+        # 3. Append service definition - choose template based on environment
         with open("ops_api_service_defs.cfg", "a") as svc_file:
-            svc_file.write(SERVICE_TEMPLATE.format(
-                base_name=base_name,
-                endpoint_name=endpoint_name,
-                hostname=hostname
-            ))
+            if base_name == "opsapi_beta":
+                # Use template without notifications for beta
+                svc_file.write(SERVICE_TEMPLATE_WITHOUT_NOTIFICATIONS.format(
+                    base_name=base_name,
+                    endpoint_name=endpoint_name,
+                    hostname=hostname
+                ))
+            else:
+                # Use template with notifications for prod
+                svc_file.write(SERVICE_TEMPLATE_WITH_NOTIFICATIONS.format(
+                    base_name=base_name,
+                    endpoint_name=endpoint_name,
+                    hostname=hostname
+                ))
         service_count += 1
 
-print(f"Generated {len(base_urls) * len(api_endpoints)} check scripts in 'nagios_checks'")
+print(f"Generated {len(base_urls) * len(api_endpoints)} check scripts in 'ops_apis'")
 print(f"Generated {command_count} command definitions in 'ops_api_command_defs.cfg'")
 print(f"Generated {service_count} service definitions in 'ops_api_service_defs.cfg'")
