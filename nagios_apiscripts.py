@@ -97,7 +97,9 @@ define service{{
         check_interval                  720
         max_check_attempts              3
         retry_interval                  5
-        servicegroups                   operations_apis
+        servicegroups                   operations_apis_beta
+        notifications_enabled           0
+        notification_interval           1440
 }}
 
 """
