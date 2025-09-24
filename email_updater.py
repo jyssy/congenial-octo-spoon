@@ -1,27 +1,31 @@
 #!/usr/bin/python
-
-import requests
-import re
-import os
-import time
+import requests, re, os, time, sys
 from pathlib import Path
 from datetime import datetime
+
+# Read API key
+try:
+    API_KEY = os.environ.get('API_KEY') or Path('/users/jelambeadmin/soft/access_django_user_admin/API_KEY').read_text().strip()
+except Exception as e:
+    print(f"UNKNOWN: Error reading API key: {str(e)}")
+    sys.exit(3)
+
+# Configuration
+base_url = "https://allocations-api.access-ci.org/acdb/userinfo/v2/people/search"
+headers = {"XA-RESOURCE": "operations.django", "XA-AGENT": "userinfo", "XA-API-KEY": API_KEY}
+update_files = '--update' in sys.argv
 
 def log_message(message, log_content):
     log_content.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}")
 
-def get_exact_email(username, api_key):
+def get_exact_email(username):
     try:
-        response = requests.get(
-            "https://allocations-api.access-ci.org/acdb/userinfo/v2/people/search",
-            params={'q': username.strip()},
-            headers={"XA-RESOURCE": "operations.django", "XA-AGENT": "userinfo", "XA-API-KEY": api_key}
-        )
-        if response.status_code == 200:
-            for result in response.json().get('result', []):
+        resp = requests.get(base_url, params={'q': username.strip()}, headers=headers)
+        if resp.status_code == 200:
+            for result in resp.json().get('result', []):
                 if result.get('portal_login') == username.strip():
                     return result.get('email', '').strip()
-    except:
+    except Exception:
         pass
     return None
 
@@ -34,17 +38,13 @@ def update_contact_email(cfg_file, username, old_email, new_email):
         return True
     return False
 
-def main():
-    import sys
-    update_files = '--update' in sys.argv
+# Main execution
+log_file = Path('contact_changes.log')
+existing_content = log_file.read_text() if log_file.exists() else ""
+new_log_content = []
+log_message("=== Contact Email Check Started ===", new_log_content)
 
-    log_file = Path('contact_changes.log')
-    existing_content = log_file.read_text() if log_file.exists() else ""
-    new_log_content = []
-    log_message("=== Contact Email Check Started ===", new_log_content)
-
-    api_key = os.environ.get('API_KEY') or Path('/users/jelambeadmin/soft/access_django_user_admin/API_KEY').read_text().strip()
-
+try:
     for cfg_file in Path('.').glob("*.cfg"):
         log_message(f"Processing: {cfg_file.name}", new_log_content)
 
@@ -57,7 +57,7 @@ def main():
 
             username = contact['contact_name'].strip()
             local_email = contact.get('email', 'NOT_SET').strip()
-            api_email = get_exact_email(username, api_key)
+            api_email = get_exact_email(username)
 
             if api_email and local_email != api_email:
                 log_message(f"MISMATCH - {username}: '{local_email}' → '{api_email}'", new_log_content)
@@ -74,5 +74,6 @@ def main():
     log_file.write_text("\n".join(new_log_content) + "\n" + existing_content)
     print(f"Results logged to: contact_changes.log")
 
-if __name__ == "__main__":
-    main()
+except Exception as e:
+    print(f"UNKNOWN: Error processing files: {str(e)}")
+    sys.exit(3)
