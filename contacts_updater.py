@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# this script used CoPilot to be written
 import requests, re, os, time, sys
 from pathlib import Path
 from datetime import datetime
@@ -18,13 +19,17 @@ update_files = '--update' in sys.argv
 def log_message(message, log_content):
     log_content.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}")
 
-def get_exact_email(username):
+def get_user_info(username):
     try:
         resp = requests.get(base_url, params={'q': username.strip()}, headers=headers)
         if resp.status_code == 200:
             for result in resp.json().get('result', []):
                 if result.get('portal_login') == username.strip():
-                    return result.get('email', '').strip()
+                    email = result.get('email', '').strip()
+                    first_name = result.get('first_name', '').strip()
+                    last_name = result.get('last_name', '').strip()
+                    full_name = f"{first_name} {last_name}".strip()
+                    return {'email': email, 'full_name': full_name}
     except Exception:
         pass
     return None
@@ -33,6 +38,15 @@ def update_contact_email(cfg_file, username, old_email, new_email):
     content = cfg_file.read_text()
     pattern = rf'(define contact\s*\{{[^}}]*contact_name\s+{re.escape(username)}[^}}]*email\s+){re.escape(old_email)}'
     updated = re.sub(pattern, rf'\1{new_email}', content, flags=re.DOTALL)
+    if updated != content:
+        cfg_file.write_text(updated)
+        return True
+    return False
+
+def update_contact_alias(cfg_file, username, old_alias, new_alias):
+    content = cfg_file.read_text()
+    pattern = rf'(define contact\s*\{{[^}}]*contact_name\s+{re.escape(username)}[^}}]*alias\s+){re.escape(old_alias)}'
+    updated = re.sub(pattern, rf'\1{new_alias}', content, flags=re.DOTALL)
     if updated != content:
         cfg_file.write_text(updated)
         return True
@@ -50,21 +64,36 @@ try:
 
         for block in re.findall(r'define contact\s*\{(.*?)\}', cfg_file.read_text(), re.DOTALL):
             contact = dict(line.strip().split(None, 1) for line in block.strip().split('\n')
-                          if len(line.strip().split(None, 1)) == 2 and line.strip().split()[0] in ['contact_name', 'email'])
+                          if len(line.strip().split(None, 1)) == 2 and line.strip().split()[0] in ['contact_name', 'email', 'alias'])
 
             if 'contact_name' not in contact:
                 continue
 
             username = contact['contact_name'].strip()
             local_email = contact.get('email', 'NOT_SET').strip()
-            api_email = get_exact_email(username)
+            local_alias = contact.get('alias', 'NOT_SET').strip()
 
-            if api_email and local_email != api_email:
-                log_message(f"MISMATCH - {username}: '{local_email}' → '{api_email}'", new_log_content)
-                if update_files and update_contact_email(cfg_file, username, local_email, api_email):
-                    log_message(f"UPDATED - {username} in {cfg_file.name}", new_log_content)
-            elif api_email:
-                log_message(f"OK - {username}: '{local_email}'", new_log_content)
+            user_info = get_user_info(username)
+
+            if user_info:
+                api_email = user_info['email']
+                api_full_name = user_info['full_name']
+
+                # Check and update email
+                if api_email and local_email != api_email:
+                    log_message(f"EMAIL MISMATCH - {username}: '{local_email}' → '{api_email}'", new_log_content)
+                    if update_files and update_contact_email(cfg_file, username, local_email, api_email):
+                        log_message(f"EMAIL UPDATED - {username} in {cfg_file.name}", new_log_content)
+                elif api_email:
+                    log_message(f"EMAIL OK - {username}: '{local_email}'", new_log_content)
+
+                # Check and update alias/name
+                if api_full_name and local_alias != api_full_name:
+                    log_message(f"NAME MISMATCH - {username}: '{local_alias}' → '{api_full_name}'", new_log_content)
+                    if update_files and update_contact_alias(cfg_file, username, local_alias, api_full_name):
+                        log_message(f"NAME UPDATED - {username} in {cfg_file.name}", new_log_content)
+                elif api_full_name:
+                    log_message(f"NAME OK - {username}: '{local_alias}'", new_log_content)
             else:
                 log_message(f"NO_MATCH - {username}: No exact match found", new_log_content)
 

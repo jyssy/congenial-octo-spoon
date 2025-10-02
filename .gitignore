@@ -1,0 +1,8 @@
+# Misc things to restrict
+.idea/
+idea/
+.DS_Store
+venv/
+env/
+.venv/
+.env/ 
